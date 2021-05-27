@@ -67,7 +67,8 @@ class ENVDQN:
             state0 = self.env.reset()
             if self.state_init != None:
                 self.state_init(state0)
-            for i_step in range(200):
+            round_num = 200
+            for i_step in range(round_num):
                 action = self.dqn.act(state0)
                 state1, reward, done, info = self.env.step(action)
 
@@ -77,7 +78,9 @@ class ENVDQN:
 
                 reward = self.reward_adjuster(reward, state0, state1, done)
                 self.dqn.learn(state0, action, state1, reward)
-                if done:
+                # if done:
+                #     self.env.render()
+                if done or i_step == round_num-1:
                     print("training episode {} finish after {} steps".format(i_epi, i_step))
                     break
                 state0 = state1
