@@ -34,22 +34,35 @@ import math
 # Episode Termination:
 #      The car position is more than 0.5
 #      Episode length is greater than 200
-
 env = gym.make('MountainCar-v0')
-state_dim = 4
-action_dim = 3
-
+dqn = DQN(2, 3)
 
 # train our network
-for i_episode in range(1):
+for i_epi in range(80):
     state0 = env.reset()
-    for t in range(100):
-        env.render()
-        action = random.randint(0, action_dim-1)
-        if (t//20) % 2 == 0:
-            action = 0
-        else:
-            action = 2
-        print("===>>> ", action, (t/20), (t/20)%2)
-        env.step(action)
+    for i_round in range(200):
+        action = dnq.act(state0)
+        state1, reward, done, info = env.step(action)
 
+        # TODO: adjust the reward according to the pole angle
+
+        if done:
+            reward = -10
+        
+        dnq.learn(state0, action, state1, reward)
+        
+        if done:
+            print("training episode {} finish after {} steps".format(i_epi, i_round))
+            break
+        state0 = state1
+
+for i_test in range(5):
+    state0 = env.reset()
+    for i_round in range(200):
+        env.render()
+        action = dnq.act(state0)
+        state1, _, done, _ = env.step(action)
+        if done:
+            print("testing episode {} finish after {} steps".format(i_test, i_round))
+            break
+        state0 = state1

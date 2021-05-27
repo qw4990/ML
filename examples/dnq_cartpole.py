@@ -3,7 +3,7 @@ import random
 import torch
 import torch.nn as nn
 import math
-from dqn import DQN
+from dqn import ENVDQN
 
 # Description:
 #     A pole is attached by an un-actuated joint to a cart, which moves along
@@ -42,31 +42,14 @@ from dqn import DQN
 #     Considered solved when the average return is greater than or equal to
 #     195.0 over 100 consecutive trials.
 env = gym.make('CartPole-v0')
-dnq = DQN(4, 2)
-for i_epi in range(80):
-    state0 = env.reset()
-    for i_round in range(200):
-        action = dnq.act(state0)
-        state1, reward, done, info = env.step(action)
 
-        # TODO: adjust the reward according to the pole angle
+def reward_adjuster(reward, state0, state1, done):
+    if done:
+        return -10
+    return reward
 
-        if done:
-            reward = -10
-        
-        dnq.learn(state0, action, state1, reward)
-        
-        if done:
-            print("training episode {} finish after {} steps".format(i_epi, i_round))
-            break
-        state0 = state1
+envdqn = ENVDQN(env, reward_adjuster, 80, 5)
 
-for i_test in range(10):
-    state0 = env.reset()
-    for i_round in range(200):
-        action = dnq.act(state0)
-        state1, _, done, _ = env.step(action)
-        if done:
-            print("testing episode {} finish after {} steps".format(i_test, i_round))
-            break
-        state0 = state1
+envdqn.train()
+
+envdqn.test()

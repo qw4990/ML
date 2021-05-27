@@ -51,3 +51,36 @@ class DQN:
         self.opt.zero_grad()
         loss.backward()
         self.opt.step()
+
+class ENVDQN:
+    def __init__(self, env, reward_adjuster, train_epi, test_epi):
+        self.dqn = DQN(env.observation_space.shape[0], env.action_space.n)
+        self.env = env
+        self.reward_adjuster = reward_adjuster
+        self.train_epi = train_epi
+        self.test_epi = test_epi
+
+    def train(self):
+        for i_epi in range(self.train_epi):
+            state0 = self.env.reset()
+            for i_round in range(200):
+                action = self.dqn.act(state0)
+                state1, reward, done, info = self.env.step(action)
+                reward = self.reward_adjuster(reward, state0, state1, done)
+                self.dqn.learn(state0, action, state1, reward)
+                if done:
+                    print("training episode {} finish after {} steps".format(i_epi, i_round))
+                    break
+                state0 = state1
+    
+    def test(self):
+        for i_test in range(self.test_epi):
+            state0 = self.env.reset()
+            for i_round in range(200):
+                self.env.render()
+                action = self.dqn.act(state0)
+                state1, _, done, _ = self.env.step(action)
+                if done:
+                    print("testing episode {} finish after {} steps".format(i_test, i_round))
+                    break
+                state0 = state1
