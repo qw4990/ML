@@ -53,10 +53,11 @@ class DQN:
         self.opt.step()
 
 class ENVDQN:
-    def __init__(self, env, train_epi, test_epi, reward_adjuster = None, state_init = None):
+    def __init__(self, env, train_epi, test_epi, reward_adjuster = None, state_init = None, finish_train = None):
         self.dqn = DQN(env.observation_space.shape[0], env.action_space.n)
         self.env = env
         self.reward_adjuster = reward_adjuster
+        self.finish_train = finish_train
         self.state_init = state_init
         self.train_epi = train_epi
         self.test_epi = test_epi
@@ -66,24 +67,29 @@ class ENVDQN:
             state0 = self.env.reset()
             if self.state_init != None:
                 self.state_init(state0)
-            for i_round in range(200):
+            for i_step in range(200):
                 action = self.dqn.act(state0)
                 state1, reward, done, info = self.env.step(action)
+
+                if self.finish_train != None and self.finish_train(i_epi, i_step, done):
+                    print("finish training at episode {}".format(i_epi))
+                    return
+
                 reward = self.reward_adjuster(reward, state0, state1, done)
                 self.dqn.learn(state0, action, state1, reward)
                 if done:
-                    print("training episode {} finish after {} steps".format(i_epi, i_round))
+                    print("training episode {} finish after {} steps".format(i_epi, i_step))
                     break
                 state0 = state1
     
     def test(self):
         for i_test in range(self.test_epi):
             state0 = self.env.reset()
-            for i_round in range(200):
+            for i_step in range(200):
                 self.env.render()
                 action = self.dqn.act(state0)
                 state1, _, done, _ = self.env.step(action)
                 if done:
-                    print("testing episode {} finish after {} steps".format(i_test, i_round))
+                    print("testing episode {} finish after {} steps".format(i_test, i_step))
                     break
                 state0 = state1

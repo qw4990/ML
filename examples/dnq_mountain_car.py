@@ -42,16 +42,27 @@ def state_init(state):
     global init_pos
     init_pos = state[0]
 
+cnt = 0
+def finish_train(i_epi, i_step, done):
+    global cnt
+    if done:
+        if i_step < 180:
+            cnt += 1
+        else:
+            cnt = 0
+        if cnt >= 3:
+            return True
+    return False
+
 def reward_adjuster(reward, state0, state1, done):
     if reward == 0:
-        print("==>>> reach the flag")
         return 1000
     pos = state1[0]
     vel = state1[1]
     pos_diff = abs(init_pos - pos)
     return reward + pos_diff + abs(vel*5)
 
-envdqn = ENVDQN(env, 100, 1, reward_adjuster)
+envdqn = ENVDQN(env, 100, 1, reward_adjuster, state_init, finish_train)
 
 envdqn.train()
 
