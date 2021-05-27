@@ -8,7 +8,7 @@ class DQN:
     def __init__(self, state_dim, action_dim):
         self.state_dim = state_dim
         self.action_dim = action_dim
-        self.MLP = nn.Sequential(nn.Linear(state_dim, 256), nn.ReLU(), nn.Linear(256, action_dim))
+        self.MLP = nn.Sequential(nn.Linear(state_dim, 256), nn.ReLU(), nn.ReLU(), nn.ReLU(), nn.Linear(256, action_dim))
         self.opt = torch.optim.Adam(self.MLP.parameters(), lr=0.001)
         self.steps = 0
         self.decay = 200
@@ -53,16 +53,19 @@ class DQN:
         self.opt.step()
 
 class ENVDQN:
-    def __init__(self, env, reward_adjuster, train_epi, test_epi):
+    def __init__(self, env, train_epi, test_epi, reward_adjuster = None, state_init = None):
         self.dqn = DQN(env.observation_space.shape[0], env.action_space.n)
         self.env = env
         self.reward_adjuster = reward_adjuster
+        self.state_init = state_init
         self.train_epi = train_epi
         self.test_epi = test_epi
 
     def train(self):
         for i_epi in range(self.train_epi):
             state0 = self.env.reset()
+            if self.state_init != None:
+                self.state_init(state0)
             for i_round in range(200):
                 action = self.dqn.act(state0)
                 state1, reward, done, info = self.env.step(action)

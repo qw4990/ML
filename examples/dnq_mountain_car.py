@@ -2,6 +2,7 @@ import gym
 import random
 import torch
 import torch.nn as nn
+from dqn import ENVDQN
 import math
 
 # Description:
@@ -35,34 +36,23 @@ import math
 #      The car position is more than 0.5
 #      Episode length is greater than 200
 env = gym.make('MountainCar-v0')
-dqn = DQN(2, 3)
 
-# train our network
-for i_epi in range(80):
-    state0 = env.reset()
-    for i_round in range(200):
-        action = dnq.act(state0)
-        state1, reward, done, info = env.step(action)
+init_pos = -0.5
+def state_init(state):
+    global init_pos
+    init_pos = state[0]
 
-        # TODO: adjust the reward according to the pole angle
+def reward_adjuster(reward, state0, state1, done):
+    if reward == 0:
+        print("==>>> reach the flag")
+        return 1000
+    pos = state1[0]
+    vel = state1[1]
+    pos_diff = abs(init_pos - pos)
+    return reward + pos_diff + abs(vel*5)
 
-        if done:
-            reward = -10
-        
-        dnq.learn(state0, action, state1, reward)
-        
-        if done:
-            print("training episode {} finish after {} steps".format(i_epi, i_round))
-            break
-        state0 = state1
+envdqn = ENVDQN(env, 100, 1, reward_adjuster)
 
-for i_test in range(5):
-    state0 = env.reset()
-    for i_round in range(200):
-        env.render()
-        action = dnq.act(state0)
-        state1, _, done, _ = env.step(action)
-        if done:
-            print("testing episode {} finish after {} steps".format(i_test, i_round))
-            break
-        state0 = state1
+envdqn.train()
+
+envdqn.test()
